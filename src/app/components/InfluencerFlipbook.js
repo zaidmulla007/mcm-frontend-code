@@ -16,8 +16,18 @@ const formatNumber = (num) => {
     return num.toString();
 };
 
+// Rating options for filter
+const ratingOptions = [
+    { value: "all", label: "All", stars: 0 },
+    { value: "5", label: "5", stars: 5 },
+    { value: "4", label: "4", stars: 4 },
+    { value: "3", label: "3", stars: 3 },
+    { value: "2", label: "2", stars: 2 },
+    { value: "1", label: "1", stars: 1 },
+];
+
 // Left Panel Component - Filters, Profile Image, Rank, Name, Subscribers
-const LeftPanel = ({ influencer }) => {
+const LeftPanel = ({ influencer, selectedRating, setSelectedRating }) => {
     const handleNavigate = () => {
         const url = influencer.platform === "YouTube"
             ? `/influencers/${influencer.id}`
@@ -34,6 +44,22 @@ const LeftPanel = ({ influencer }) => {
 
             {/* Content */}
             <div className="relative flex-1 flex flex-col items-center justify-center overflow-y-auto custom-scrollbar min-h-0">
+
+                {/* Rating Filter */}
+                <div className="w-full max-w-[180px] mb-3">
+                    <label className="block text-[9px] font-semibold text-gray-600 uppercase mb-1 text-center">Rating Filter</label>
+                    <select
+                        value={selectedRating}
+                        onChange={(e) => setSelectedRating(e.target.value)}
+                        className="w-full bg-white border-2 border-blue-200 hover:border-blue-400 rounded-lg px-3 py-1.5 text-[11px] font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all cursor-pointer shadow-sm"
+                    >
+                        {ratingOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.value === "all" ? "All Ratings" : "⭐".repeat(option.stars)}
+                            </option>
+                        ))}
+                    </select>
+                </div>
 
                 {/* Profile Image */}
                 <div className="relative mb-2 group cursor-pointer" onClick={handleNavigate}>
@@ -628,7 +654,7 @@ const TOCLeftPanel = ({ influencers, selectedIndex, onSelect, onHoverSelect, sel
 };
 
 // Main Flipbook Component
-const FourFoldFlipbook = ({ influencers, selectedPlatform, setSelectedPlatform, selectedTimeframe, setSelectedTimeframe, timeframeOptions }) => {
+const FourFoldFlipbook = ({ influencers, selectedPlatform, setSelectedPlatform, selectedTimeframe, setSelectedTimeframe, timeframeOptions, selectedRating, setSelectedRating }) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [isFlipping, setIsFlipping] = useState(false);
     const [flipDirection, setFlipDirection] = useState(null);
@@ -737,6 +763,8 @@ const FourFoldFlipbook = ({ influencers, selectedPlatform, setSelectedPlatform, 
                     >
                         <LeftPanel
                             influencer={currentInfluencer}
+                            selectedRating={selectedRating}
+                            setSelectedRating={setSelectedRating}
                         />
                     </div>
 
@@ -869,8 +897,14 @@ export default function InfluencerFlipbook() {
     const [telegramInfluencers, setTelegramInfluencers] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Filter states - only Source and Holding Period
+    // Filter states - Source, Holding Period, and Rating
     const [selectedTimeframe, setSelectedTimeframe] = useState("180_days");
+    const [selectedRating, setSelectedRating] = useState("3");
+
+    // Reset rating to default when platform changes
+    useEffect(() => {
+        setSelectedRating("3");
+    }, [selectedPlatform]);
 
     // Default year for API
     const selectedYear = useMemo(() => {
@@ -881,12 +915,12 @@ export default function InfluencerFlipbook() {
         return d.getFullYear().toString();
     }, []);
 
-    // API parameters - ALWAYS use 180_days for ranking, filter only affects star rating display
+    // API parameters - uses selectedRating for filtering
     const apiParams = useMemo(() => ({
-        rating: "3",
+        rating: selectedRating,
         timeframe: "180_days",
         year: selectedYear
-    }), [selectedYear]);
+    }), [selectedYear, selectedRating]);
 
     // Fetch data functions
     const fetchYouTubeData = useCallback(async () => {
@@ -1064,6 +1098,8 @@ export default function InfluencerFlipbook() {
                         selectedTimeframe={selectedTimeframe}
                         setSelectedTimeframe={setSelectedTimeframe}
                         timeframeOptions={timeframeOptions}
+                        selectedRating={selectedRating}
+                        setSelectedRating={setSelectedRating}
                     />
                 )}
             </div>
