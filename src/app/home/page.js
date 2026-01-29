@@ -499,7 +499,7 @@ export default function HomePage() {
       </div>
 
       {/* Influencer Flipbook Section - Full Width */}
-      <div className="mt-16 w-full bg-white py-8 overflow-hidden">
+      <div className="w-full py-4 overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -529,9 +529,9 @@ export default function HomePage() {
         `}</style>
       </div>
 
-      <div className="mx-auto px-4 py-16">
+      <div className="mx-auto px-4 py-4">
         {/* YouTube Telegram Data Table Guage Component */}
-        <div className="mt-16">
+        <div className="mt-4">
           <YouTubeTelegramDataTable useLocalTime={useLocalTime} />
         </div>
 

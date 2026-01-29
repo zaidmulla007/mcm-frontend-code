@@ -101,9 +101,6 @@ export default function InfluencerSearchPage() {
       } else {
         setYoutubeInfluencers([]);
       }
-
-      // MCM ratings are now included in the main API response (star_rating_yearly)
-      // No need for separate API call
     } catch (err) {
       setError("Failed to fetch YouTube data");
       setYoutubeInfluencers([]);
@@ -141,9 +138,6 @@ export default function InfluencerSearchPage() {
       } else {
         setTelegramInfluencers([]);
       }
-
-      // MCM ratings are now included in the main API response (star_rating_yearly)
-      // No need for separate API call
     } catch (err) {
       setError("Failed to fetch Telegram data");
       setTelegramInfluencers([]);
@@ -222,41 +216,47 @@ export default function InfluencerSearchPage() {
     let influencers;
 
     if (selectedPlatform === "youtube") {
-      influencers = youtubeInfluencers.map((ch) => ({
-        id: ch.channel_id,
-        name: ch.influencer_name,
-        platform: "YouTube",
-        subs: ch.subs,
-        score: ch.ai_overall_score || ch.score || 0,
-        rank: ch.rank,
-        channel_thumbnails: ch.channel_thumbnails,
-        prob_weighted_returns: ch.prob_weighted_returns || 0,
-        win_percentage: ch.win_percentage || 0,
-        price_counts: ch.price_counts || 0,
-        ai_overall_score: ch.ai_overall_score || 0,
-        final_score: ch.final_score || 0,
-        current_rating: ch.current_rating || 0,
-        gemini_summary: ch.gemini_summary || '',
-        star_rating_yearly: ch.star_rating_yearly || {},
-      }));
+      influencers = youtubeInfluencers.map((ch) => {
+        return {
+          id: ch.channel_id,
+          name: ch.influencer_name,
+          platform: "YouTube",
+          subs: ch.subs,
+          score: ch.ai_overall_score || ch.score || 0,
+          rank: ch.rank,
+          channel_thumbnails: ch.channel_thumbnails,
+          prob_weighted_returns: ch.prob_weighted_returns || 0,
+          win_percentage: ch.win_percentage || 0,
+          price_counts: ch.price_counts || 0,
+          ai_overall_score: ch.ai_overall_score || 0,
+          final_score: ch.final_score || 0,
+          current_rating: ch.current_rating || 0,
+          gemini_summary: ch.gemini_summary || '',
+          star_rating_yearly: ch.star_rating_yearly || {},
+        };
+      });
     } else if (selectedPlatform === "telegram") {
-      influencers = telegramInfluencers.map((tg) => ({
-        id: tg.channel_id || tg.id,
-        name: tg.influencer_name && tg.influencer_name !== "N/A" ? tg.influencer_name : (tg.channel_id || "Unknown Channel"),
-        platform: "Telegram",
-        subs: tg.subscribers || tg.subs || 0,
-        score: tg.ai_overall_score || tg.score || 0,
-        rank: tg.rank,
-        channel_thumbnails: tg.channel_thumbnails,
-        prob_weighted_returns: tg.prob_weighted_returns || 0,
-        win_percentage: tg.win_percentage || 0,
-        price_counts: tg.price_counts || 0,
-        ai_overall_score: tg.ai_overall_score || 0,
-        final_score: tg.final_score || 0,
-        current_rating: tg.current_rating || 0,
-        gemini_summary: tg.gemini_summary || '',
-        star_rating_yearly: tg.star_rating_yearly || {},
-      }));
+      influencers = telegramInfluencers.map((tg) => {
+        const channelId = tg.channel_id || tg.id;
+
+        return {
+          id: channelId,
+          name: tg.influencer_name && tg.influencer_name !== "N/A" ? tg.influencer_name : (channelId || "Unknown Channel"),
+          platform: "Telegram",
+          subs: tg.subscribers || tg.subs || 0,
+          score: tg.ai_overall_score || tg.score || 0,
+          rank: tg.rank,
+          channel_thumbnails: tg.channel_thumbnails,
+          prob_weighted_returns: tg.prob_weighted_returns || 0,
+          win_percentage: tg.win_percentage || 0,
+          price_counts: tg.price_counts || 0,
+          ai_overall_score: tg.ai_overall_score || 0,
+          final_score: tg.final_score || 0,
+          current_rating: tg.current_rating || 0,
+          gemini_summary: tg.gemini_summary || '',
+          star_rating_yearly: tg.star_rating_yearly || {},
+        };
+      });
     } else {
       influencers = [];
     }
@@ -578,15 +578,15 @@ export default function InfluencerSearchPage() {
                           }) // Filter to start from 2022 and apply visibility rules
                           .sort((a, b) => a - b); // Sort in ascending order
 
-                        // Build scatter data for each year
+                        // Build scatter data for each year (use 1_year timeframe data)
                         years.forEach((year, yearIndex) => {
                           const yearData = starRatingYearly[year];
-                          if (yearData && yearData.current_rating) {
+                          if (yearData && yearData['1_year'] && yearData['1_year'].current_rating) {
                             scatterData.push({
                               year: yearIndex,
                               yearLabel: year,
-                              rating: yearData.current_rating,
-                              finalScore: yearData.current_final_score
+                              rating: yearData['1_year'].current_rating,
+                              finalScore: yearData['1_year'].current_final_score
                             });
                           }
                         });

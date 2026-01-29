@@ -26,8 +26,8 @@ const ratingOptions = [
     { value: "1", label: "1", stars: 1 },
 ];
 
-// Left Panel Component - Filters, Profile Image, Rank, Name, Subscribers
-const LeftPanel = ({ influencer, selectedRating, setSelectedRating }) => {
+// Left Panel Component - Profile Image, Name, Subscribers
+const LeftPanel = ({ influencer }) => {
     const handleNavigate = () => {
         const url = influencer.platform === "YouTube"
             ? `/influencers/${influencer.id}`
@@ -44,22 +44,6 @@ const LeftPanel = ({ influencer, selectedRating, setSelectedRating }) => {
 
             {/* Content */}
             <div className="relative flex-1 flex flex-col items-center justify-center overflow-y-auto custom-scrollbar min-h-0">
-
-                {/* Rating Filter */}
-                <div className="w-full max-w-[180px] mb-3">
-                    <label className="block text-[9px] font-semibold text-gray-600 uppercase mb-1 text-center">Rating Filter</label>
-                    <select
-                        value={selectedRating}
-                        onChange={(e) => setSelectedRating(e.target.value)}
-                        className="w-full bg-white border-2 border-blue-200 hover:border-blue-400 rounded-lg px-3 py-1.5 text-[11px] font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all cursor-pointer shadow-sm"
-                    >
-                        {ratingOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                                {option.value === "all" ? "All Ratings" : "⭐".repeat(option.stars)}
-                            </option>
-                        ))}
-                    </select>
-                </div>
 
                 {/* Profile Image */}
                 <div className="relative mb-2 group cursor-pointer" onClick={handleNavigate}>
@@ -214,24 +198,20 @@ const MiddlePanel = ({ influencer }) => {
                         <div className="flex items-center justify-between mb-1.5">
                             <span className="text-[9px] font-bold text-gray-600 px-1">Number of Posts</span>
                         </div>
-                        <div className="grid grid-cols-4 gap-1.5">
-                            <div className="bg-white rounded-md p-1.5 border border-blue-50 text-center shadow-sm">
-                                <div className="text-[7px] text-gray-500 font-medium mb-0.5">2022</div>
-                                <div className="text-[11px] font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">178</div>
+                        {influencer?.yearly_post_counts && Object.keys(influencer.yearly_post_counts).length > 0 ? (
+                            <div className="grid grid-cols-4 gap-1.5">
+                                {Object.entries(influencer.yearly_post_counts)
+                                    .sort(([a], [b]) => parseInt(a) - parseInt(b))
+                                    .map(([year, count]) => (
+                                        <div key={year} className="bg-white rounded-md p-1.5 border border-blue-50 text-center shadow-sm">
+                                            <div className="text-[7px] text-gray-500 font-medium mb-0.5">{year}</div>
+                                            <div className="text-[11px] font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{formatNumber(count)}</div>
+                                        </div>
+                                    ))}
                             </div>
-                            <div className="bg-white rounded-md p-1.5 border border-blue-50 text-center shadow-sm">
-                                <div className="text-[7px] text-gray-500 font-medium mb-0.5">2023</div>
-                                <div className="text-[11px] font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">210</div>
-                            </div>
-                            <div className="bg-white rounded-md p-1.5 border border-blue-50 text-center shadow-sm">
-                                <div className="text-[7px] text-gray-500 font-medium mb-0.5">2024</div>
-                                <div className="text-[11px] font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">385</div>
-                            </div>
-                            <div className="bg-white rounded-md p-1.5 border border-blue-50 text-center shadow-sm">
-                                <div className="text-[7px] text-gray-500 font-medium mb-0.5">2025</div>
-                                <div className="text-[11px] font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">142</div>
-                            </div>
-                        </div>
+                        ) : (
+                            <div className="text-center text-gray-400 text-[8px] py-2">No post data available</div>
+                        )}
                     </div>
 
                     {/* AI Scoring Section */}
@@ -565,7 +545,7 @@ const RightPanel = ({ influencer, selectedTimeframe, setSelectedTimeframe, timef
 };
 
 // Table of Contents - Left Panel
-const TOCLeftPanel = ({ influencers, selectedIndex, onSelect, onHoverSelect, selectedPlatform, setSelectedPlatform }) => {
+const TOCLeftPanel = ({ influencers, selectedIndex, onSelect, onHoverSelect, selectedPlatform, setSelectedPlatform, searchQuery, setSearchQuery, selectedRating, setSelectedRating }) => {
     return (
         <div className="h-full w-full bg-white/95 backdrop-blur-sm flex flex-col p-3 md:p-4 relative border-r border-gray-100">
             <div className="absolute top-0 left-0 w-full h-full opacity-30 pointer-events-none">
@@ -573,7 +553,7 @@ const TOCLeftPanel = ({ influencers, selectedIndex, onSelect, onHoverSelect, sel
             </div>
 
             <div className="relative flex flex-col z-10 h-full min-h-0">
-                <div className="flex-shrink-0 mb-3">
+                <div className="flex-shrink-0 mb-2">
                     <div className="flex items-center justify-between">
                         <h2 className="text-lg md:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                             Influencers
@@ -604,6 +584,30 @@ const TOCLeftPanel = ({ influencers, selectedIndex, onSelect, onHoverSelect, sel
                     <div className="w-10 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mt-1"></div>
                 </div>
 
+                {/* Search and Rating Filter - Side by Side */}
+                <div className="flex-shrink-0 mb-2 flex gap-1.5">
+                    {/* Search Input */}
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search..."
+                        className="flex-1 min-w-0 bg-white border border-blue-200 hover:border-blue-400 rounded-lg px-2 py-1.5 text-[10px] font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-transparent transition-all shadow-sm placeholder-gray-400"
+                    />
+                    {/* Rating Filter */}
+                    <select
+                        value={selectedRating}
+                        onChange={(e) => setSelectedRating(e.target.value)}
+                        className="w-[80px] bg-white border border-blue-200 hover:border-blue-400 rounded-lg px-1.5 py-1.5 text-[10px] font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-transparent transition-all cursor-pointer shadow-sm"
+                    >
+                        {ratingOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.value === "all" ? "All" : "⭐".repeat(option.stars)}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
                 <div className="flex-1 overflow-y-auto pr-1 space-y-1.5 custom-scrollbar min-h-0">
                     {influencers.length > 0 ? influencers.map((inf, idx) => (
                         <div
@@ -616,19 +620,25 @@ const TOCLeftPanel = ({ influencers, selectedIndex, onSelect, onHoverSelect, sel
                                 }`}
                         >
                             <div className={`w-7 h-7 rounded-full overflow-hidden flex items-center justify-center font-bold text-xs shadow-md transition-transform flex-shrink-0 ${selectedIndex === idx ? 'scale-110 ring-2 ring-blue-400' : 'group-hover:scale-110'}`}>
-                                {inf.platform === "YouTube" && inf.channel_thumbnails?.high?.url ? (
+                                {inf.channel_thumbnails?.high?.url ? (
                                     <Image
                                         src={inf.channel_thumbnails.high.url}
                                         alt={inf.name || ""}
                                         width={28}
                                         height={28}
                                         className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                            e.target.nextSibling.style.display = 'flex';
+                                        }}
                                     />
-                                ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold">
-                                        {inf.name?.charAt(0)?.toUpperCase() || "?"}
-                                    </div>
-                                )}
+                                ) : null}
+                                <div
+                                    className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold"
+                                    style={{ display: inf.channel_thumbnails?.high?.url ? 'none' : 'flex' }}
+                                >
+                                    {inf.name?.charAt(0)?.toUpperCase() || "?"}
+                                </div>
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className={`font-bold text-[10px] truncate transition-colors ${selectedIndex === idx ? 'text-blue-700' : 'text-gray-800 group-hover:text-blue-600'
@@ -654,7 +664,7 @@ const TOCLeftPanel = ({ influencers, selectedIndex, onSelect, onHoverSelect, sel
 };
 
 // Main Flipbook Component
-const FourFoldFlipbook = ({ influencers, selectedPlatform, setSelectedPlatform, selectedTimeframe, setSelectedTimeframe, timeframeOptions, selectedRating, setSelectedRating }) => {
+const FourFoldFlipbook = ({ influencers, selectedPlatform, setSelectedPlatform, selectedTimeframe, setSelectedTimeframe, timeframeOptions, selectedRating, setSelectedRating, searchQuery, setSearchQuery }) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [isFlipping, setIsFlipping] = useState(false);
     const [flipDirection, setFlipDirection] = useState(null);
@@ -722,14 +732,7 @@ const FourFoldFlipbook = ({ influencers, selectedPlatform, setSelectedPlatform, 
         setSelectedIndex(0);
     }, [influencers.length, selectedPlatform]);
 
-    if (!influencers || influencers.length === 0) {
-        return (
-            <div className="text-center py-16">
-                <p className="text-xl font-semibold text-gray-700">No influencers found</p>
-                <p className="text-gray-600 mt-2">Try adjusting your filter criteria</p>
-            </div>
-        );
-    }
+    const hasInfluencers = influencers && influencers.length > 0;
 
     return (
         <div className="flex flex-col items-center gap-4">
@@ -751,6 +754,10 @@ const FourFoldFlipbook = ({ influencers, selectedPlatform, setSelectedPlatform, 
                             onHoverSelect={handleHoverSelect}
                             selectedPlatform={selectedPlatform}
                             setSelectedPlatform={setSelectedPlatform}
+                            searchQuery={searchQuery}
+                            setSearchQuery={setSearchQuery}
+                            selectedRating={selectedRating}
+                            setSelectedRating={setSelectedRating}
                         />
                     </div>
 
@@ -761,11 +768,22 @@ const FourFoldFlipbook = ({ influencers, selectedPlatform, setSelectedPlatform, 
                             boxShadow: '0 8px 30px rgba(0,0,0,0.15)'
                         }}
                     >
-                        <LeftPanel
-                            influencer={currentInfluencer}
-                            selectedRating={selectedRating}
-                            setSelectedRating={setSelectedRating}
-                        />
+                        {hasInfluencers ? (
+                            <LeftPanel
+                                influencer={currentInfluencer}
+                            />
+                        ) : (
+                            <div className="h-full w-full bg-gradient-to-br from-blue-50 via-purple-50 to-white flex flex-col p-4 relative overflow-hidden">
+                                <div className="absolute inset-0 opacity-5">
+                                    <div className="absolute inset-0 bg-[linear-gradient(45deg,#3b82f6_25%,transparent_25%,transparent_75%,#3b82f6_75%,#3b82f6),linear-gradient(45deg,#3b82f6_25%,transparent_25%,transparent_75%,#3b82f6_75%,#3b82f6)] bg-[length:20px_20px] bg-[0_0,10px_10px]"></div>
+                                </div>
+                                <div className="relative flex-1 flex flex-col items-center justify-center text-center px-4">
+                                    <div className="text-4xl mb-3">🔍</div>
+                                    <p className="text-sm font-semibold text-gray-700 mb-1">No results found</p>
+                                    <p className="text-[10px] text-gray-500">Try a different search term or adjust filters</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Panel 3: Middle Panel (Performance) */}
@@ -775,7 +793,13 @@ const FourFoldFlipbook = ({ influencers, selectedPlatform, setSelectedPlatform, 
                             boxShadow: '0 8px 30px rgba(0,0,0,0.15)'
                         }}
                     >
-                        <MiddlePanel influencer={currentInfluencer} />
+                        {hasInfluencers ? (
+                            <MiddlePanel influencer={currentInfluencer} />
+                        ) : (
+                            <div className="h-full w-full bg-white flex items-center justify-center">
+                                <p className="text-gray-400 text-sm">No data available</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Panel 4: Right Panel (ROI & Win Rate Analysis) */}
@@ -785,107 +809,123 @@ const FourFoldFlipbook = ({ influencers, selectedPlatform, setSelectedPlatform, 
                             boxShadow: '6px 0 25px rgba(0,0,0,0.12), 0 8px 30px rgba(0,0,0,0.15)'
                         }}
                     >
-                        <RightPanel
-                            influencer={currentInfluencer}
-                            selectedTimeframe={selectedTimeframe}
-                            setSelectedTimeframe={setSelectedTimeframe}
-                            timeframeOptions={timeframeOptions}
-                        />
+                        {hasInfluencers ? (
+                            <RightPanel
+                                influencer={currentInfluencer}
+                                selectedTimeframe={selectedTimeframe}
+                                setSelectedTimeframe={setSelectedTimeframe}
+                                timeframeOptions={timeframeOptions}
+                            />
+                        ) : (
+                            <div className="h-full w-full bg-white flex items-center justify-center">
+                                <p className="text-gray-400 text-sm">No data available</p>
+                            </div>
+                        )}
                     </div>
 
                 </div>
             </div>
 
             {/* Navigation Controls */}
-            <div className="flex items-center gap-4 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-gray-200">
-                <button
-                    onClick={goPrev}
-                    disabled={selectedIndex === 0 || isFlipping}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full font-semibold text-sm transition-all ${selectedIndex === 0 || isFlipping
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 hover:shadow-lg transform hover:scale-105'
-                        }`}
-                >
-                    <FaChevronLeft className="w-3 h-3" />
-                    <span className="hidden sm:inline">Prev</span>
-                </button>
+            {hasInfluencers && (
+                <div className="flex items-center gap-4 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-gray-200">
+                    <button
+                        onClick={goPrev}
+                        disabled={selectedIndex === 0 || isFlipping}
+                        className={`flex items-center gap-1.5 px-4 py-2 rounded-full font-semibold text-sm transition-all ${selectedIndex === 0 || isFlipping
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 hover:shadow-lg transform hover:scale-105'
+                            }`}
+                    >
+                        <FaChevronLeft className="w-3 h-3" />
+                        <span className="hidden sm:inline">Prev</span>
+                    </button>
 
-                <div className="text-center px-3">
-                    <div className="text-sm font-semibold text-gray-800">
-                        {selectedIndex + 1} / {influencers.length}
+                    <div className="text-center px-3">
+                        <div className="text-sm font-semibold text-gray-800">
+                            {selectedIndex + 1} / {influencers.length}
+                        </div>
                     </div>
-                </div>
 
-                <button
-                    onClick={goNext}
-                    disabled={selectedIndex >= influencers.length - 1 || isFlipping}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full font-semibold text-sm transition-all ${selectedIndex >= influencers.length - 1 || isFlipping
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 hover:shadow-lg transform hover:scale-105'
-                        }`}
-                >
-                    <span className="hidden sm:inline">Next</span>
-                    <FaChevronRight className="w-3 h-3" />
-                </button>
-            </div>
+                    <button
+                        onClick={goNext}
+                        disabled={selectedIndex >= influencers.length - 1 || isFlipping}
+                        className={`flex items-center gap-1.5 px-4 py-2 rounded-full font-semibold text-sm transition-all ${selectedIndex >= influencers.length - 1 || isFlipping
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 hover:shadow-lg transform hover:scale-105'
+                            }`}
+                    >
+                        <span className="hidden sm:inline">Next</span>
+                        <FaChevronRight className="w-3 h-3" />
+                    </button>
+                </div>
+            )}
 
             {/* Quick Navigation - Influencer Thumbnails */}
-            <div className="flex items-center gap-2 overflow-x-auto max-w-full px-4 py-2 custom-scrollbar">
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => {
-                            const container = document.getElementById('flipbook-thumbnail-container');
-                            if (container) container.scrollBy({ left: -150, behavior: 'smooth' });
-                        }}
-                        className="p-1.5 rounded-full bg-white shadow-md border hover:bg-gray-50 text-gray-600 transition-all z-10"
-                    >
-                        <FaChevronLeft className="w-2.5 h-2.5" />
-                    </button>
+            {hasInfluencers && (
+                <div className="flex items-center gap-2 overflow-x-auto max-w-full px-4 py-2 custom-scrollbar">
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => {
+                                const container = document.getElementById('flipbook-thumbnail-container');
+                                if (container) container.scrollBy({ left: -150, behavior: 'smooth' });
+                            }}
+                            className="p-1.5 rounded-full bg-white shadow-md border hover:bg-gray-50 text-gray-600 transition-all z-10"
+                        >
+                            <FaChevronLeft className="w-2.5 h-2.5" />
+                        </button>
 
-                    <div
-                        id="flipbook-thumbnail-container"
-                        className="flex items-center gap-1.5 overflow-x-auto max-w-[250px] sm:max-w-[350px] md:max-w-[500px] scrollbar-hide scroll-smooth"
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                    >
-                        {influencers.map((inf, idx) => (
-                            <button
-                                key={inf.id}
-                                onMouseEnter={() => handleHoverSelect(idx)}
-                                onClick={() => handleSelect(idx)}
-                                className={`flex-shrink-0 w-8 h-8 rounded-full overflow-hidden border-2 transition-all ${idx === selectedIndex
-                                    ? 'border-blue-500 ring-2 ring-blue-300 scale-110'
-                                    : 'border-gray-300 hover:border-blue-400'
-                                    }`}
-                                title={inf.name}
-                            >
-                                {inf.platform === "YouTube" && inf.channel_thumbnails?.high?.url ? (
-                                    <Image
-                                        src={inf.channel_thumbnails.high.url}
-                                        alt={inf.name || ""}
-                                        width={32}
-                                        height={32}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold">
+                        <div
+                            id="flipbook-thumbnail-container"
+                            className="flex items-center gap-1.5 overflow-x-auto max-w-[250px] sm:max-w-[350px] md:max-w-[500px] scrollbar-hide scroll-smooth"
+                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                        >
+                            {influencers.map((inf, idx) => (
+                                <button
+                                    key={inf.id}
+                                    onMouseEnter={() => handleHoverSelect(idx)}
+                                    onClick={() => handleSelect(idx)}
+                                    className={`flex-shrink-0 w-8 h-8 rounded-full overflow-hidden border-2 transition-all ${idx === selectedIndex
+                                        ? 'border-blue-500 ring-2 ring-blue-300 scale-110'
+                                        : 'border-gray-300 hover:border-blue-400'
+                                        }`}
+                                    title={inf.name}
+                                >
+                                    {inf.channel_thumbnails?.high?.url ? (
+                                        <Image
+                                            src={inf.channel_thumbnails.high.url}
+                                            alt={inf.name || ""}
+                                            width={32}
+                                            height={32}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                                e.target.nextSibling.style.display = 'flex';
+                                            }}
+                                        />
+                                    ) : null}
+                                    <div
+                                        className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold"
+                                        style={{ display: inf.channel_thumbnails?.high?.url ? 'none' : 'flex' }}
+                                    >
                                         {inf.name?.charAt(0)?.toUpperCase() || "?"}
                                     </div>
-                                )}
-                            </button>
-                        ))}
-                    </div>
+                                </button>
+                            ))}
+                        </div>
 
-                    <button
-                        onClick={() => {
-                            const container = document.getElementById('flipbook-thumbnail-container');
-                            if (container) container.scrollBy({ left: 150, behavior: 'smooth' });
-                        }}
-                        className="p-1.5 rounded-full bg-white shadow-md border hover:bg-gray-50 text-gray-600 transition-all z-10"
-                    >
-                        <FaChevronRight className="w-2.5 h-2.5" />
-                    </button>
+                        <button
+                            onClick={() => {
+                                const container = document.getElementById('flipbook-thumbnail-container');
+                                if (container) container.scrollBy({ left: 150, behavior: 'smooth' });
+                            }}
+                            className="p-1.5 rounded-full bg-white shadow-md border hover:bg-gray-50 text-gray-600 transition-all z-10"
+                        >
+                            <FaChevronRight className="w-2.5 h-2.5" />
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
@@ -897,13 +937,15 @@ export default function InfluencerFlipbook() {
     const [telegramInfluencers, setTelegramInfluencers] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Filter states - Source, Holding Period, and Rating
+    // Filter states - Source, Holding Period, Rating, and Search
     const [selectedTimeframe, setSelectedTimeframe] = useState("180_days");
     const [selectedRating, setSelectedRating] = useState("3");
+    const [searchQuery, setSearchQuery] = useState("");
 
-    // Reset rating to default when platform changes
+    // Reset rating and search to default when platform changes
     useEffect(() => {
         setSelectedRating("3");
+        setSearchQuery("");
     }, [selectedPlatform]);
 
     // Default year for API
@@ -979,54 +1021,84 @@ export default function InfluencerFlipbook() {
         }
     }, [selectedPlatform, fetchYouTubeData, fetchTelegramData]);
 
+    // Helper function to get display name (use channel_id if name is N/A or empty)
+    const getDisplayName = (influencerName, channelId) => {
+        if (!influencerName || influencerName === "N/A" || influencerName.trim() === "") {
+            return channelId || "Unknown Channel";
+        }
+        return influencerName;
+    };
+
     // Get filtered influencers
     const getFilteredInfluencers = () => {
         let influencers;
 
         if (selectedPlatform === "youtube") {
-            influencers = youtubeInfluencers.map((ch) => ({
-                id: ch.channel_id,
-                name: ch.influencer_name,
-                platform: "YouTube",
-                subs: ch.subs,
-                rank: ch.rank,
-                channel_thumbnails: ch.channel_thumbnails,
-                prob_weighted_returns: ch.prob_weighted_returns || 0,
-                win_percentage: ch.win_percentage || 0,
-                price_counts: ch.price_counts || 0,
-                ai_overall_score: ch.ai_overall_score || 0,
-                final_score: ch.final_score || 0,
-                current_rating: ch.current_rating || 0,
-                gemini_summary: ch.gemini_summary || '',
-                star_rating_yearly: ch.star_rating_yearly || {},
-                score_yearly_timeframes: ch.score_yearly_timeframes || {},
-                ai_scoring_yearly: ch.ai_scoring_yearly || {},
-                last_post_date: ch.last_post_date || '',
-                last_post_date_string: ch.last_post_date_string || '',
-                last_post_time: ch.last_post_time || '',
-            }));
+            influencers = youtubeInfluencers
+                .filter(ch => ch.subs && ch.subs > 0) // Exclude subs=0
+                .filter(ch => {
+                    // Filter by search query using influencer_name
+                    if (!searchQuery.trim()) return true;
+                    const query = searchQuery.toLowerCase().trim();
+                    const influencerName = ch.influencer_name?.toLowerCase() || '';
+                    const channelId = ch.channel_id?.toLowerCase() || '';
+                    return influencerName.includes(query) || channelId.includes(query);
+                })
+                .map((ch) => ({
+                    id: ch.channel_id,
+                    name: getDisplayName(ch.influencer_name, ch.channel_id),
+                    platform: "YouTube",
+                    subs: ch.subs,
+                    rank: ch.rank,
+                    channel_thumbnails: ch.channel_thumbnails,
+                    prob_weighted_returns: ch.prob_weighted_returns || 0,
+                    win_percentage: ch.win_percentage || 0,
+                    price_counts: ch.price_counts || 0,
+                    ai_overall_score: ch.ai_overall_score || 0,
+                    final_score: ch.final_score || 0,
+                    current_rating: ch.current_rating || 0,
+                    gemini_summary: ch.gemini_summary || '',
+                    star_rating_yearly: ch.star_rating_yearly || {},
+                    score_yearly_timeframes: ch.score_yearly_timeframes || {},
+                    ai_scoring_yearly: ch.ai_scoring_yearly || {},
+                    last_post_date: ch.last_post_date || '',
+                    last_post_date_string: ch.last_post_date_string || '',
+                    last_post_time: ch.last_post_time || '',
+                    yearly_post_counts: ch.yearly_post_counts || {},
+                }));
         } else if (selectedPlatform === "telegram") {
-            influencers = telegramInfluencers.map((tg) => ({
-                id: tg.channel_id || tg.id,
-                name: tg.influencer_name && tg.influencer_name !== "N/A" ? tg.influencer_name : (tg.channel_id || "Unknown Channel"),
-                platform: "Telegram",
-                subs: tg.subscribers || tg.subs || 0,
-                rank: tg.rank,
-                channel_thumbnails: tg.channel_thumbnails,
-                prob_weighted_returns: tg.prob_weighted_returns || 0,
-                win_percentage: tg.win_percentage || 0,
-                price_counts: tg.price_counts || 0,
-                ai_overall_score: tg.ai_overall_score || 0,
-                final_score: tg.final_score || 0,
-                current_rating: tg.current_rating || 0,
-                gemini_summary: tg.gemini_summary || '',
-                star_rating_yearly: tg.star_rating_yearly || {},
-                score_yearly_timeframes: tg.score_yearly_timeframes || {},
-                ai_scoring_yearly: tg.ai_scoring_yearly || {},
-                last_post_date: tg.last_post_date || '',
-                last_post_date_string: tg.last_post_date_string || '',
-                last_post_time: tg.last_post_time || '',
-            }));
+            influencers = telegramInfluencers
+                .filter(tg => (tg.subscribers || tg.subs) && (tg.subscribers || tg.subs) > 0) // Exclude subs=0
+                .filter(tg => {
+                    // Filter by search query using influencer_name
+                    if (!searchQuery.trim()) return true;
+                    const query = searchQuery.toLowerCase().trim();
+                    const influencerName = tg.influencer_name?.toLowerCase() || '';
+                    const channelId = (tg.channel_id || tg.id)?.toLowerCase() || '';
+                    return influencerName.includes(query) || channelId.includes(query);
+                })
+                .map((tg) => ({
+                    id: tg.channel_id || tg.id,
+                    name: getDisplayName(tg.influencer_name, tg.channel_id || tg.id),
+                    platform: "Telegram",
+                    subs: tg.subscribers || tg.subs || 0,
+                    rank: tg.rank,
+                    channel_thumbnails: tg.channel_thumbnails,
+                    prob_weighted_returns: tg.prob_weighted_returns || 0,
+                    win_percentage: tg.win_percentage || 0,
+                    price_counts: tg.price_counts || 0,
+                    ai_overall_score: tg.ai_overall_score || 0,
+                    final_score: tg.final_score || 0,
+                    current_rating: tg.current_rating || 0,
+                    gemini_summary: tg.gemini_summary || '',
+                    star_rating_yearly: tg.star_rating_yearly || {},
+                    score_yearly_timeframes: tg.score_yearly_timeframes || {},
+                    ai_scoring_yearly: tg.ai_scoring_yearly || {},
+                    last_post_date: tg.last_post_date || '',
+                    last_post_date_string: tg.last_post_date_string || '',
+                    last_post_time: tg.last_post_time || '',
+                    yearly_post_counts: tg.yearly_post_counts || {},
+                }));
         } else {
             influencers = [];
         }
@@ -1038,7 +1110,7 @@ export default function InfluencerFlipbook() {
     const timeframeOptions = getDynamicTimeframeOptions(selectedYear);
 
     return (
-        <div className="w-full">
+        <div className="w-full min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
             {/* Custom Animations */}
             <style jsx global>{`
         @keyframes flip-in-left {
@@ -1100,6 +1172,8 @@ export default function InfluencerFlipbook() {
                         timeframeOptions={timeframeOptions}
                         selectedRating={selectedRating}
                         setSelectedRating={setSelectedRating}
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
                     />
                 )}
             </div>

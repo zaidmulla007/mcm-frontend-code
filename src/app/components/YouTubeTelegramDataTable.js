@@ -112,43 +112,17 @@ export default function YouTubeTelegramDataTable({ useLocalTime: propUseLocalTim
     }, [influencerModal.isOpen]);
 
 
-    // Fetch initial Binance 24hr price data and setup WebSocket for live updates
+    // Setup WebSocket for live Binance price updates (USDT pairs only)
     useEffect(() => {
         let isMounted = true;
         let ws = null;
-
-        // Fetch initial data via REST API
-        const fetchBinancePriceData = async () => {
-            try {
-                const response = await fetch('https://api.binance.com/api/v3/ticker/24hr');
-                const data = await response.json();
-
-                if (!isMounted) return;
-
-                // Create a map of symbol to priceChangePercent and lastPrice (only USDT pairs)
-                const priceMap = {};
-                const livePriceMap = {};
-                data.forEach(ticker => {
-                    if (ticker.symbol.endsWith('USDT')) {
-                        const symbol = ticker.symbol.replace('USDT', '').toLowerCase();
-                        priceMap[symbol] = parseFloat(ticker.priceChangePercent);
-                        livePriceMap[symbol] = parseFloat(ticker.lastPrice);
-                    }
-                });
-
-                setBinancePriceData(priceMap);
-                setBinanceLivePrice(livePriceMap);
-            } catch (error) {
-                console.error('Error fetching Binance price data:', error);
-            }
-        };
 
         // Setup WebSocket connection for live 24hr ticker updates
         const setupWebSocket = () => {
             ws = new WebSocket('wss://stream.binance.com:9443/ws/!ticker@arr');
 
             ws.onopen = () => {
-                console.log('Binance WebSocket connected for 24hr ticker');
+                console.log('Binance WebSocket connected for live ticker data');
             };
 
             ws.onmessage = (event) => {
@@ -157,7 +131,8 @@ export default function YouTubeTelegramDataTable({ useLocalTime: propUseLocalTim
                 try {
                     const data = JSON.parse(event.data);
 
-                    // Update price data with live values
+                    // Only use live WebSocket data - no API fallback
+                    // This ensures we only show truly live prices
                     setBinancePriceData(prevData => {
                         const newData = { ...prevData };
                         data.forEach(ticker => {
@@ -204,12 +179,8 @@ export default function YouTubeTelegramDataTable({ useLocalTime: propUseLocalTim
             };
         };
 
-        // Fetch initial data then setup WebSocket
-        fetchBinancePriceData().then(() => {
-            if (isMounted) {
-                setupWebSocket();
-            }
-        });
+        // Start WebSocket connection immediately
+        setupWebSocket();
 
         return () => {
             isMounted = false;

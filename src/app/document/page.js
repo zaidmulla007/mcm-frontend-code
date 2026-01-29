@@ -6,7 +6,8 @@ import {
   FaChartLine, FaBalanceScale, FaChartBar, FaChartArea,
   FaCheckCircle, FaExclamationTriangle, FaArrowUp, FaArrowDown,
   FaBullhorn, FaLightbulb, FaShieldAlt, FaRocket, FaUsers,
-  FaCoins, FaCog, FaGlobe, FaFileAlt, FaSpinner, FaDownload
+  FaCoins, FaCog, FaGlobe, FaFileAlt, FaSpinner, FaDownload,
+  FaEye, FaTimes
 } from "react-icons/fa";
 
 // API URL (using local proxy)
@@ -853,6 +854,7 @@ function DocumentPageContent() {
   const [analysisDate, setAnalysisDate] = useState("");
   const [downloading, setDownloading] = useState(false);
   const [hasAutoDownloaded, setHasAutoDownloaded] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const reportRef = useRef(null);
 
   // PDF Download function
@@ -1090,7 +1092,7 @@ function DocumentPageContent() {
           </p>
         </div>
 
-        {/* Coin Selector and Download Button */}
+        {/* Coin Selector and Action Buttons */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <CoinSelector
             coins={coins}
@@ -1099,23 +1101,32 @@ function DocumentPageContent() {
           />
 
           {selectedCoin && (
-            <button
-              onClick={handleDownloadPDF}
-              disabled={downloading}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {downloading ? (
-                <>
-                  <FaSpinner className="animate-spin" />
-                  Generating PDF...
-                </>
-              ) : (
-                <>
-                  <FaDownload />
-                  Download PDF
-                </>
-              )}
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowReportModal(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                <FaEye />
+                View Report
+              </button>
+              <button
+                onClick={handleDownloadPDF}
+                disabled={downloading}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {downloading ? (
+                  <>
+                    <FaSpinner className="animate-spin" />
+                    Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <FaDownload />
+                    Download PDF
+                  </>
+                )}
+              </button>
+            </div>
           )}
         </div>
 
@@ -1123,6 +1134,260 @@ function DocumentPageContent() {
         <div ref={reportRef}>
           {selectedCoin && <CoinReport data={selectedCoin} />}
         </div>
+
+        {/* Report Modal */}
+        {showReportModal && selectedCoin && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="relative w-full max-w-7xl max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden">
+              {/* Modal Header */}
+              <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">
+                  {selectedCoin.name} - Market Analysis Report
+                </h2>
+                <button
+                  onClick={() => setShowReportModal(false)}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <FaTimes className="text-white text-xl" />
+                </button>
+              </div>
+
+              {/* Modal Content - Scrollable Report */}
+              <div className="overflow-y-auto max-h-[calc(90vh-80px)] p-6">
+                {/* Report Content without header/footer/disclaimer */}
+                <div className="columns-1 lg:columns-2 gap-8">
+                  {/* 1. Social Analysis */}
+                  {(hasContent(selectedCoin.socialAnalysis.summary) || hasContent(selectedCoin.socialAnalysis.bullishFactors)) && (
+                    <div className="mb-8 pb-8 border-b border-gray-200 break-inside-avoid">
+                      <SectionHeader number={1} title="Social Analysis" icon={FaBullhorn} />
+
+                      {hasContent(selectedCoin.socialAnalysis.summary) && (
+                        <TextContent text={selectedCoin.socialAnalysis.summary} />
+                      )}
+
+                      {hasContent(selectedCoin.socialAnalysis.sentiment) && (
+                        <p className="mt-4 text-gray-700">
+                          <span className="font-semibold">Sentiment:</span>{" "}
+                          <span className={`font-medium ${selectedCoin.socialAnalysis.sentiment.toLowerCase().includes('bullish')
+                            ? 'text-green-600'
+                            : selectedCoin.socialAnalysis.sentiment.toLowerCase().includes('bearish')
+                              ? 'text-red-500'
+                              : 'text-gray-700'
+                            }`}>
+                            {selectedCoin.socialAnalysis.sentiment}
+                          </span>
+                        </p>
+                      )}
+
+                      {hasContent(selectedCoin.socialAnalysis.keyPoints) && (
+                        <>
+                          <SubsectionHeader title="Key Social Points" />
+                          <BulletList items={selectedCoin.socialAnalysis.keyPoints} />
+                        </>
+                      )}
+
+                      {hasContent(selectedCoin.socialAnalysis.bullishFactors) && (
+                        <>
+                          <SubsectionHeader title="Bullish Factors" />
+                          <div className="bg-green-50 p-4 border border-green-100" style={{ borderRadius: '12px' }}>
+                            <TextContent text={selectedCoin.socialAnalysis.bullishFactors} />
+                          </div>
+                        </>
+                      )}
+
+                      {hasContent(selectedCoin.socialAnalysis.bearishConcerns) && (
+                        <>
+                          <SubsectionHeader title="Bearish Concerns" />
+                          <div className="bg-red-50 p-4 border border-red-100" style={{ borderRadius: '12px' }}>
+                            <TextContent text={selectedCoin.socialAnalysis.bearishConcerns} />
+                          </div>
+                        </>
+                      )}
+
+                      {hasContent(selectedCoin.socialAnalysis.marketTrends) && (
+                        <>
+                          <SubsectionHeader title="Market Trends" />
+                          <TextContent text={selectedCoin.socialAnalysis.marketTrends} />
+                        </>
+                      )}
+
+                      {hasContent(selectedCoin.socialAnalysis.keyEvents) && (
+                        <>
+                          <SubsectionHeader title="Key Events" />
+                          <TextContent text={selectedCoin.socialAnalysis.keyEvents} />
+                        </>
+                      )}
+
+                      {hasContent(selectedCoin.socialAnalysis.importantAlerts) && (
+                        <>
+                          <SubsectionHeader title="Important Alerts" />
+                          <div className="bg-amber-50 p-4 border border-amber-200" style={{ borderRadius: '12px' }}>
+                            <TextContent text={selectedCoin.socialAnalysis.importantAlerts} />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 2. Fundamental Analysis */}
+                  {(hasContent(selectedCoin.fundamentalAnalysis.summary) || hasContent(selectedCoin.fundamentalAnalysis.whitepaper)) && (
+                    <div className="mb-8 pb-8 border-b border-gray-200">
+                      <SectionHeader number={2} title="Fundamental Analysis" icon={FaBalanceScale} />
+
+                      {hasContent(selectedCoin.fundamentalAnalysis.summary) && (
+                        <TextContent text={selectedCoin.fundamentalAnalysis.summary} />
+                      )}
+
+                      {hasContent(selectedCoin.fundamentalAnalysis.score) && (
+                        <div style={{ marginTop: '16px' }}>
+                          <span
+                            style={{
+                              padding: '6px 14px',
+                              borderRadius: '9999px',
+                              background: 'linear-gradient(to right, #dbeafe, #f3e8ff)',
+                              display: 'inline-block',
+                              fontSize: '14px',
+                              fontWeight: '700',
+                              color: '#7c3aed'
+                            }}
+                          >
+                            Score: {selectedCoin.fundamentalAnalysis.score}/10
+                          </span>
+                        </div>
+                      )}
+
+                      {hasContent(selectedCoin.fundamentalAnalysis.strengths) && (
+                        <>
+                          <SubsectionHeader title="Strengths" />
+                          <div className="bg-green-50 p-4 border border-green-100" style={{ borderRadius: '12px' }}>
+                            <BulletList items={selectedCoin.fundamentalAnalysis.strengths} />
+                          </div>
+                        </>
+                      )}
+
+                      {hasContent(selectedCoin.fundamentalAnalysis.weaknesses) && (
+                        <>
+                          <SubsectionHeader title="Weaknesses" />
+                          <div className="bg-red-50 p-4 border border-red-100" style={{ borderRadius: '12px' }}>
+                            <BulletList items={selectedCoin.fundamentalAnalysis.weaknesses} />
+                          </div>
+                        </>
+                      )}
+
+                      {hasContent(selectedCoin.fundamentalAnalysis.whitepaper.coreConcept?.summary) && (
+                        <>
+                          <SubsectionHeader
+                            title="Core Concept"
+                            score={selectedCoin.fundamentalAnalysis.whitepaper.coreConcept?.score}
+                          />
+                          <TextContent text={selectedCoin.fundamentalAnalysis.whitepaper.coreConcept.summary} />
+                        </>
+                      )}
+
+                      {hasContent(selectedCoin.fundamentalAnalysis.whitepaper.features) && (
+                        <>
+                          <SubsectionHeader title="Product Features" />
+                          <BulletList items={selectedCoin.fundamentalAnalysis.whitepaper.features} />
+                        </>
+                      )}
+
+                      {hasContent(selectedCoin.fundamentalAnalysis.whitepaper.tokenPurpose?.summary) && (
+                        <>
+                          <SubsectionHeader
+                            title="Token Purpose"
+                            score={selectedCoin.fundamentalAnalysis.whitepaper.tokenPurpose?.score}
+                          />
+                          <TextContent text={selectedCoin.fundamentalAnalysis.whitepaper.tokenPurpose.summary} />
+                        </>
+                      )}
+
+                      {hasContent(selectedCoin.fundamentalAnalysis.whitepaper.technology?.summary) && (
+                        <>
+                          <SubsectionHeader
+                            title="Technology"
+                            score={selectedCoin.fundamentalAnalysis.whitepaper.technology?.score}
+                          />
+                          <TextContent text={selectedCoin.fundamentalAnalysis.whitepaper.technology.summary} />
+                        </>
+                      )}
+
+                      {hasContent(selectedCoin.fundamentalAnalysis.whitepaper.team?.summary) && (
+                        <>
+                          <SubsectionHeader
+                            title="Team"
+                            score={selectedCoin.fundamentalAnalysis.whitepaper.team?.score}
+                          />
+                          <TextContent text={selectedCoin.fundamentalAnalysis.whitepaper.team.summary} />
+                        </>
+                      )}
+
+                      {hasContent(selectedCoin.fundamentalAnalysis.whitepaper.marketFit?.summary) && (
+                        <>
+                          <SubsectionHeader
+                            title="Market Fit"
+                            score={selectedCoin.fundamentalAnalysis.whitepaper.marketFit?.score}
+                          />
+                          <TextContent text={selectedCoin.fundamentalAnalysis.whitepaper.marketFit.summary} />
+                        </>
+                      )}
+
+                      {hasContent(selectedCoin.fundamentalAnalysis.whitepaper.tokenomics?.summary) && (
+                        <>
+                          <SubsectionHeader
+                            title="Tokenomics"
+                            score={selectedCoin.fundamentalAnalysis.whitepaper.tokenomics?.score}
+                          />
+                          <TextContent text={selectedCoin.fundamentalAnalysis.whitepaper.tokenomics.summary} />
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 3. Technical Analysis */}
+                  {hasContent(selectedCoin.technicalAnalysis.summary) && (
+                    <div className="mb-8 pb-8 border-b border-gray-200">
+                      <SectionHeader number={3} title="Technical Analysis" icon={FaChartLine} />
+
+                      <TextContent text={selectedCoin.technicalAnalysis.summary} />
+
+                      <SubsectionHeader title="Trend Overview" />
+                      <TrendTable
+                        trend1h={selectedCoin.technicalAnalysis.trend1h}
+                        trend1d={selectedCoin.technicalAnalysis.trend1d}
+                        trend1w={selectedCoin.technicalAnalysis.trend1w}
+                      />
+
+                      {hasContent(selectedCoin.technicalAnalysis.indicators) && (
+                        <>
+                          <SubsectionHeader title="Technical Indicators" />
+                          <TextContent text={selectedCoin.technicalAnalysis.indicators} />
+                        </>
+                      )}
+
+                      {hasContent(selectedCoin.technicalAnalysis.keyLevels) && (
+                        <>
+                          <SubsectionHeader title="Key Levels" />
+                          <KeyLevelsTable
+                            support={selectedCoin.technicalAnalysis.keyLevels.support}
+                            resistance={selectedCoin.technicalAnalysis.keyLevels.resistance}
+                          />
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 4. Conclusion */}
+                  {hasContent(selectedCoin.conclusion) && (
+                    <div className="mb-8 pb-8 break-inside-avoid">
+                      <SectionHeader number={4} title="Conclusion" icon={FaFileAlt} />
+                      <TextContent text={selectedCoin.conclusion} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { FaYoutube, FaTelegramPlane, FaCertificate, FaBell, FaFileAlt } from "react-icons/fa";
+import { FaYoutube, FaTelegramPlane, FaCertificate, FaBell, FaEye, FaFileAlt } from "react-icons/fa";
 import { useCoinsLivePrice } from "@/hooks/useCoinsLivePrice";
 import { useTimezone } from "../contexts/TimezoneContext";
 import SimpleTAGauge from "@/components/SimpleTAGauge";
@@ -116,6 +116,7 @@ export default function CoinsNewPage() {
     const timeframes = ["6hrs", "24hrs", "7days", "30days"];
     const allCoinsMap = new Map();
 
+    // First pass: Collect unique coins from top 10 of each timeframe
     timeframes.forEach(timeframe => {
       if (!resultsByTimeframe || !resultsByTimeframe[timeframe]) return;
 
@@ -127,7 +128,7 @@ export default function CoinsNewPage() {
       combined.sort((a, b) => (b.total_mentions || 0) - (a.total_mentions || 0));
       const top10 = combined.slice(0, 10);
 
-      // Add to map with timeframe data
+      // Add coins to map
       top10.forEach(coin => {
         const symbol = coin.symbol;
         if (!allCoinsMap.has(symbol)) {
@@ -136,20 +137,50 @@ export default function CoinsNewPage() {
             timeframeData: {}
           });
         }
-        // Store data for this timeframe
-        // API returns yt_total_mentions and tg_total_mentions, not yt_mentions and tg_mentions
-        allCoinsMap.get(symbol).timeframeData[timeframe] = {
-          total_mentions: coin.total_mentions || 0,
-          yt_mentions: coin.yt_total_mentions || coin.yt_mentions || 0,
-          tg_mentions: coin.tg_total_mentions || coin.tg_mentions || 0,
-          bullish_percent: coin.bullish_percent || 0,
-          bearish_percent: coin.bearish_percent || 0,
-          yt_tg_bullish_short_term_percent: coin.yt_tg_bullish_short_term_percent || 0,
-          yt_tg_bearish_short_term_percent: coin.yt_tg_bearish_short_term_percent || 0,
-          yt_tg_bullish_long_term_percent: coin.yt_tg_bullish_long_term_percent || 0,
-          yt_tg_bearish_long_term_percent: coin.yt_tg_bearish_long_term_percent || 0,
-          TA_data: coin.TA_data
-        };
+      });
+    });
+
+    // Second pass: For each unique coin, collect data from ALL timeframes
+    allCoinsMap.forEach((coinData, symbol) => {
+      timeframes.forEach(timeframe => {
+        if (!resultsByTimeframe || !resultsByTimeframe[timeframe]) return;
+
+        const allCoins = resultsByTimeframe[timeframe].all_coins || [];
+        const memCoins = resultsByTimeframe[timeframe].mem_coins || [];
+        const combined = [...allCoins, ...memCoins];
+
+        // Find this coin in the current timeframe data
+        const coinInTimeframe = combined.find(c => c.symbol === symbol);
+
+        if (coinInTimeframe) {
+          // Store data for this timeframe
+          coinData.timeframeData[timeframe] = {
+            total_mentions: coinInTimeframe.total_mentions || 0,
+            yt_mentions: coinInTimeframe.yt_total_mentions || coinInTimeframe.yt_mentions || 0,
+            tg_mentions: coinInTimeframe.tg_total_mentions || coinInTimeframe.tg_mentions || 0,
+            bullish_percent: coinInTimeframe.bullish_percent || 0,
+            bearish_percent: coinInTimeframe.bearish_percent || 0,
+            yt_tg_bullish_short_term_percent: coinInTimeframe.yt_tg_bullish_short_term_percent || 0,
+            yt_tg_bearish_short_term_percent: coinInTimeframe.yt_tg_bearish_short_term_percent || 0,
+            yt_tg_bullish_long_term_percent: coinInTimeframe.yt_tg_bullish_long_term_percent || 0,
+            yt_tg_bearish_long_term_percent: coinInTimeframe.yt_tg_bearish_long_term_percent || 0,
+            TA_data: coinInTimeframe.TA_data
+          };
+        } else {
+          // Coin doesn't exist in this timeframe, set empty data
+          coinData.timeframeData[timeframe] = {
+            total_mentions: 0,
+            yt_mentions: 0,
+            tg_mentions: 0,
+            bullish_percent: 0,
+            bearish_percent: 0,
+            yt_tg_bullish_short_term_percent: 0,
+            yt_tg_bearish_short_term_percent: 0,
+            yt_tg_bullish_long_term_percent: 0,
+            yt_tg_bearish_long_term_percent: 0,
+            TA_data: null
+          };
+        }
       });
     });
 
@@ -246,6 +277,7 @@ export default function CoinsNewPage() {
           }}
           pointer={{
             animationDelay: 0,
+            animationDuration: 0,
             strokeWidth: 7
           }}
         />
@@ -523,6 +555,11 @@ export default function CoinsNewPage() {
                                 <div className="text-[10px] text-gray-500">
                                   {coin.coin_name?.charAt(0).toUpperCase() + coin.coin_name?.slice(1)}
                                 </div>
+                                {coin.mem_coin && (
+                                  <div className="text-[9px] font-semibold text-purple-600 bg-purple-100 rounded-full px-2 py-0.5 mt-1">
+                                    Meme
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </td>
@@ -629,16 +666,25 @@ export default function CoinsNewPage() {
                             </div>
                           </td>
 
-                          {/* MCM Analysis Column - Download Report */}
+                          {/* MCM Analysis Column - View and Download Report */}
                           <td className="px-3 py-4 text-center group-hover:bg-white/50 transition-all duration-300">
                             {(coinsWithReports.has(coin.symbol?.toUpperCase()) || coinsWithReports.has(coin.source_id?.toUpperCase())) ? (
-                              <button
-                                onClick={() => router.push(`/document?coin=${coin.source_id || coin.symbol}&download=true`)}
-                                className="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300 mx-auto"
-                              >
-                                <FaFileAlt className="text-sm" />
-                                <span>Download Report</span>
-                              </button>
+                              <div className="flex flex-col items-center gap-2">
+                                <button
+                                  onClick={() => router.push(`/document?coin=${coin.source_id || coin.symbol}`)}
+                                  className="flex items-center justify-center gap-2 min-w-[140px] px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300"
+                                >
+                                  <FaEye className="text-sm" />
+                                  <span>View Report</span>
+                                </button>
+                                <button
+                                  onClick={() => router.push(`/document?coin=${coin.source_id || coin.symbol}&download=true`)}
+                                  className="flex items-center justify-center gap-2 min-w-[140px] px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300"
+                                >
+                                  <FaFileAlt className="text-sm" />
+                                  <span>Download Report</span>
+                                </button>
+                              </div>
                             ) : (
                               <span className="text-xs text-gray-400">N/A</span>
                             )}
