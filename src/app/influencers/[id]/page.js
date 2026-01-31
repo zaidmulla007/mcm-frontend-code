@@ -1627,9 +1627,9 @@ export default function InfluencerProfilePage() {
                               ))}
                             </div>
 
-                            <p className="text-xs text-gray-500 text-right mt-2">
+                            {/* <p className="text-xs text-gray-500 text-right mt-2">
                               Current year {currentYear}*
-                            </p>
+                            </p> */}
                           </>
                         )}
                       </div>
@@ -1952,9 +1952,9 @@ export default function InfluencerProfilePage() {
                               <span className="text-sm text-[#0c0023]">Bearish</span>
                             </div>
                           </div>
-                          <p className="text-xs text-gray-500 text-right mt-2">
+                          {/* <p className="text-xs text-gray-500 text-right mt-2">
                             Current year {currentYear}*
-                          </p>
+                          </p> */}
                         </>
                       )}
                     </div>
