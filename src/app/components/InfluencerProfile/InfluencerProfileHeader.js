@@ -74,7 +74,7 @@ export default function InfluencerProfileHeader({ channelData }) {
       <div className="flex flex-col gap-6 px-4">
         <div className="flex flex-col md:flex-row items-center gap-8">
           {/* Avatar */}
-          {/* <div className="w-28 h-28 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-4xl font-bold overflow-hidden">
+          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-4xl font-bold overflow-hidden">
             {channelData.channel_thumbnails?.high?.url ? (
               <Image
                 src={channelData.channel_thumbnails.high.url}
@@ -88,7 +88,7 @@ export default function InfluencerProfileHeader({ channelData }) {
                 .match(/\b\w/g)
                 ?.join("") || "U"
             )}
-          </div> */}
+          </div>
           {/* Details and Heart Icon for Desktop */}
           <div className="flex-1 flex flex-col md:flex-row gap-8">
             {/* Channel Details */}
@@ -139,7 +139,7 @@ export default function InfluencerProfileHeader({ channelData }) {
               </a>
               {/* Analysis Dates */}
               <div className="flex flex-col sm:flex-row gap-4 text-sm font-semibold  text-black-900">
-                <div className="flex flex-col gap-1">
+                {/* <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <span>📅 Analysis Start Date:</span>
                     <span className="text-black-900">
@@ -154,7 +154,7 @@ export default function InfluencerProfileHeader({ channelData }) {
                         : "Not available"}
                     </span>
                   </div>
-                </div>
+                </div> */}
                 {/* <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <span>🔄 Influencer Last Video:</span>

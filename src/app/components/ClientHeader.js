@@ -11,7 +11,7 @@ import styles from "./ClientHeader.module.css";
 const navLinks = [
   { name: "Home", href: "/home", icon: FaHome },
   { name: "Trending Coins", href: "/coins-new", icon: FaCoins },
-  { name: "Influencer Stats", href: "/influencerssearch", icon: FaChartBar },
+  { name: "Influencer", href: "/influencerssearch", icon: FaChartBar },
   { name: "Latest Posts", href: "/influencer-search", icon: FaBullhorn },
   {
     name: "Coins",
