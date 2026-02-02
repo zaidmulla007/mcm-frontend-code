@@ -70,10 +70,21 @@ export default function TelegramInfluencerProfileHeader({ channelData }) {
     }
   };
 
+  // Get first letter of channel name for avatar
+  const getInitial = (name) => {
+    if (!name) return "T";
+    return name.charAt(0).toUpperCase();
+  };
+
   return (
     <section className="w-full bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 border-b border-gray-200 mb-3 py-5">
       <div className="flex flex-col gap-6 px-4">
         <div className="flex flex-col md:flex-row items-center gap-8">
+          {/* Avatar */}
+          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-4xl font-bold text-white flex-shrink-0">
+            {getInitial(channelData?.results?.channel_id)}
+          </div>
+
           {/* Details and Heart Icon for Desktop */}
           <div className="flex-1 flex flex-col md:flex-row gap-8">
             {/* Channel Details */}
@@ -112,40 +123,8 @@ export default function TelegramInfluencerProfileHeader({ channelData }) {
                 @{channelData.results?.channel_id || "Unknown"} - Telegram Channel
               </a>
 
-              {/* Analysis Dates */}
+              {/* Last System Updated */}
               <div className="flex flex-col sm:flex-row gap-4 text-sm font-semibold text-black-900">
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <span>📅 Analysis Start Date:</span>
-                    <span className="text-black-900">
-                      {channelData.results?.Overall?.start_date
-                        ? new Date(
-                          channelData.results.Overall.start_date
-                        ).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        })
-                        : "Not available"}
-                    </span>
-                  </div>
-                </div>
-                {/* <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <span>🔄 Last Message Date:</span>
-                    <span className="text-white">
-                      {channelData.results?.Overall?.end_date
-                        ? new Date(
-                          channelData.results.Overall.end_date
-                        ).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        })
-                        : "Not available"}
-                    </span>
-                  </div>
-                </div> */}
                 <div className="flex flex-col gap-1">
                   <div className="text-sm font-semibold text-black-900 flex items-center gap-2">
                     <span>🔄 Last System Updated:</span>
